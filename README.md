@@ -10,13 +10,18 @@ errors.
 The TXF format is relatively straightforward and text based. It's defined at
 https://www.taxdataexchange.org/txf/txf-spec.html
 
-The tool requires `pdftotext` from
-[Poppler](https://github.com/freedesktop/poppler).
+## Install
+
+The tool requires that the `pdftotext` executable from
+[Poppler](https://github.com/freedesktop/poppler) be available on your path. On
+most distros this dependency can be satisfied by installing the `poppler-utils`
+package using your disto's package manager, e.g. for Debian/Ubuntu run:
+`sudo apt install poppler-utils`
 
 ## Usage
 
 ```
-$ ./mssb_1099b_to_txf.py ~/Downloads/1099-B.pdf > ~/1099b.txf
+$ python3 mssb_1099b_to_txf.py ~/Downloads/1099-B.pdf > ~/1099b.txf
 ```
 
 Then import `1099b.txf` into TurboTax. You'll likely need to add some fields
