@@ -43,7 +43,7 @@ section_expr = re.compile(
 row_expr = re.compile(
         r'^(?P<descr>(\w| )+)\s+'
         r'(?P<cusip>\w+)\s+'
-        r'(?P<quantity>\d+\.\d+)\s+'
+        r'(?P<quantity>\d*\.\d+)\s+'
         r'(?P<acquired>(\d+/\d+/\d+|\w+))\s+'
         r'(?P<sold>\d+/\d+/\d+)\s+'
         r'(?P<proceeds>\$[0-9,.]+)\s+'
