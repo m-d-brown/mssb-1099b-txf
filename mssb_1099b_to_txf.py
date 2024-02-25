@@ -24,7 +24,7 @@ categories = {
 # only on "^Total".
 categories_pattern = '|'.join(categories)
 section_expr = re.compile(
-        r'('+categories_pattern+r')'
+        r'^('+categories_pattern+r')'
         r'(.*?)'
         r'^Total', re.DOTALL|re.MULTILINE)
 
