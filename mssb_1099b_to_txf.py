@@ -7,10 +7,6 @@ import re
 import subprocess
 import sys
 
-if len(sys.argv) != 2:
-    sys.exit(f'Usage: {sys.argv[0]} path-to-1099b-pdf')
-text = subprocess.check_output(['pdftotext', '-raw', sys.argv[1], '-']).decode()
-
 # Codes and structure are defined at
 # https://www.taxdataexchange.org/txf/txf-spec.html
 categories = {
@@ -64,12 +60,22 @@ def parseAndPrintRows(text, entry_code):
         print("$") # Wash sale. Leaving blank. They aren't handled here.
         print('^')
 
-print('V042')
-print('A mssb_1099b_to_txf')
-print('D ' + datetime.datetime.now().strftime('%m/%d/%Y'))
-print('^')
-for section_match in section_expr.finditer(text):
-    entry_code = categories[section_match.group(1)]
-    contents = section_match.group(2)
-    parseAndPrintRows(contents, entry_code)
+def parse_sections(text):
+    return section_expr.finditer(text)
 
+def main():
+    if len(sys.argv) != 2:
+        sys.exit(f'Usage: {sys.argv[0]} path-to-1099b-pdf')
+    text = subprocess.check_output(['pdftotext', '-raw', sys.argv[1], '-']).decode()
+
+    print('V042')
+    print('A mssb_1099b_to_txf')
+    print('D ' + datetime.datetime.now().strftime('%m/%d/%Y'))
+    print('^')
+    for section_match in parse_sections(text):
+        entry_code = categories[section_match.group(1)]
+        contents = section_match.group(2)
+        parseAndPrintRows(contents, entry_code)
+
+if __name__ == '__main__':
+    main()
