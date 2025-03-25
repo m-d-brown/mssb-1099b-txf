@@ -75,18 +75,34 @@ def main():
         'input_path',
         type=os.path.realpath,
         help='The path to the 1099-B PDF document.')
+    parser.add_argument(
+        'output_path',
+        nargs='?',
+        default=None,
+        type=str,
+        help=('The destination file name for the TXF output. If this argument '
+              'is omitted, then the TXF output will print to stdout.'))
     args = parser.parse_args()
     text = subprocess.check_output(['pdftotext', '-raw', args.input_path, '-']).decode()
 
-    print('V042')
-    print('A mssb_1099b_to_txf')
-    print('D ' + datetime.datetime.now().strftime('%m/%d/%Y'))
-    print('^')
-    for section_match in parse_sections(text):
-        entry_code = categories[section_match.group(1)]
-        contents = section_match.group(2)
-        serialized = parseAndSerializeRows(contents, entry_code)
-        sys.stdout.write(serialized)
+    output_stream = sys.stdout
+    if args.output_path:
+        if os.path.exists(args.output_path):
+            raise FileExistsError('Output path "' + args.output_path + '" already exists')
+        output_stream = open(args.output_path, 'w')
+
+    try:
+        output_stream.write('V042' + '\n')
+        output_stream.write('A mssb_1099b_to_txf' + '\n')
+        output_stream.write('D ' + datetime.datetime.now().strftime('%m/%d/%Y') + '\n')
+        output_stream.write('^' + '\n')
+        for section_match in parse_sections(text):
+            entry_code = categories[section_match.group(1)]
+            contents = section_match.group(2)
+            serialized = parseAndSerializeRows(contents, entry_code)
+            output_stream.write(serialized)
+    finally:
+        output_stream.close()
 
 if __name__ == '__main__':
     main()
