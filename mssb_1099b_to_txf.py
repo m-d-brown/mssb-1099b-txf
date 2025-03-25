@@ -2,10 +2,11 @@
 
 """mssb_1099b_to_txf converts simple Morgan Stanley (MSSB) 1099-B PDFs to TXF files."""
 
+import argparse
 import datetime
+import os
 import re
 import subprocess
-import sys
 
 # Codes and structure are defined at
 # https://www.taxdataexchange.org/txf/txf-spec.html
@@ -64,9 +65,13 @@ def parse_sections(text):
     return section_expr.finditer(text)
 
 def main():
-    if len(sys.argv) != 2:
-        sys.exit(f'Usage: {sys.argv[0]} path-to-1099b-pdf')
-    text = subprocess.check_output(['pdftotext', '-raw', sys.argv[1], '-']).decode()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'input_path',
+        type=os.path.realpath,
+        help='The path to the 1099-B PDF document.')
+    args = parser.parse_args()
+    text = subprocess.check_output(['pdftotext', '-raw', args.input_path, '-']).decode()
 
     print('V042')
     print('A mssb_1099b_to_txf')
