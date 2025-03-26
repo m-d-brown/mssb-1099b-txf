@@ -45,20 +45,24 @@ row_expr = re.compile(
         r'(?P<proceeds>\$[0-9,.]+)\s+'
         r'(?P<cost>\$[0-9,.]+)\s', re.DOTALL|re.MULTILINE)
 
-def parseAndPrintRows(text, entry_code):
+def parseAndSerializeRows(text, entry_code):
+    output_rows = []
     for match in row_expr.finditer(text):
-        print('TD')
-        print('N' + entry_code)
-        print('C1')
-        print('L1')
-        print('P' + match.group('descr'))
-        print('D' + match.group('acquired'))
-        print('D' + match.group('sold'))
+        output_rows.append('TD')
+        output_rows.append('N' + entry_code)
+        output_rows.append('C1')
+        output_rows.append('L1')
+        # Form 8949 documents "100 sh. XYZ Co." as the example format.
+        output_rows.append('P' + match.group('quantity') +
+                           ' sh. of ' + match.group('descr'))
+        output_rows.append('D' + match.group('acquired'))
+        output_rows.append('D' + match.group('sold'))
         # These have a leading dollar sign.
-        print(match.group('cost'))
-        print(match.group('proceeds'))
-        print("$") # Wash sale. Leaving blank. They aren't handled here.
-        print('^')
+        output_rows.append(match.group('cost'))
+        output_rows.append(match.group('proceeds'))
+        output_rows.append("$") # Wash sale. Leaving blank. They aren't handled here.
+        output_rows.append('^')
+    return '\n'.join(output_rows) + '\n'
 
 def parse_sections(text):
     return section_expr.finditer(text)
@@ -75,7 +79,8 @@ def main():
     for section_match in parse_sections(text):
         entry_code = categories[section_match.group(1)]
         contents = section_match.group(2)
-        parseAndPrintRows(contents, entry_code)
+        serialized = parseAndSerializeRows(contents, entry_code)
+        sys.stdout.write(serialized)
 
 if __name__ == '__main__':
     main()
