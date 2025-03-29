@@ -7,6 +7,7 @@ import datetime
 import os
 import re
 import subprocess
+import sys
 
 # Codes and structure are defined at
 # https://www.taxdataexchange.org/txf/txf-spec.html
