@@ -54,7 +54,7 @@ TD
 N711
 C1
 L1
-P123.450000 sh. of XYZ INC CL C
+P123.45 sh. of XYZ INC CL C
 D01/01/23
 D02/02/23
 $1,000.00
@@ -62,6 +62,22 @@ $1,100.00
 $
 ^
 """)
+
+    def testFormatShareQuantity(self):
+        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('123'), '123',
+                         'Whole numbers should be left as-is')
+        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('123.'),'123',
+                         'Remove decimal if there is no fractional part')
+        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('123.00'), '123',
+                         'Trim trailing zeros and decimal if the fractional part is zero')
+        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('45.6'), '45.6',
+                         'Leave fractional part if there are no trailing zeros')
+        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('45.60'), '45.6',
+                         'Trim trailing zeros but leave non-zero fractional part')
+        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('70'), '70',
+                         'Do not trim trailing zeros for whole numbers')
+        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('70.0'), '70',
+                         'Do not trim trailing zeros to the left of the decimal')
 
 if __name__ == '__main__':
     unittest.main()
