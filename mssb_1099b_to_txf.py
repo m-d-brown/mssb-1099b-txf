@@ -9,10 +9,11 @@ import re
 import shutil
 import subprocess
 import sys
+from typing import Iterator, NamedTuple, Optional, TextIO
 
 # Codes and structure are defined at
 # https://www.taxdataexchange.org/txf/txf-spec.html
-categories = {
+CATEGORIES = {
         'Short Term – Noncovered Securities': '711',
         'Long Term – Noncovered Securities': '713',
 }
@@ -21,9 +22,9 @@ categories = {
 # The last line can say 'Total Short Term – Noncovered Securities' or
 # 'Total Short Term Noncovered Securities' (without the hypen) so match
 # only on "^Total".
-categories_pattern = '|'.join(categories)
-section_expr = re.compile(
-        r'^('+categories_pattern+r')'
+CATEGORIES_PATTERN = '|'.join(CATEGORIES)
+SECTION_EXPR = re.compile(
+        r'^('+CATEGORIES_PATTERN+r')'
         r'(.*?)'
         r'^Total', re.DOTALL|re.MULTILINE)
 
@@ -39,7 +40,7 @@ section_expr = re.compile(
 #   1234 ALPHABET INC CL C
 #   12345A678
 #   1.000000 VARIOUS 02/01/20 $2,000.00 $1,9999.00
-row_expr = re.compile(
+ROW_EXPR = re.compile(
         r'^(?P<descr>(\w| )+)\s+'
         r'(?P<cusip>\w+)\s+'
         r'(?P<quantity>\d*\.\d+)\s+'
@@ -48,30 +49,30 @@ row_expr = re.compile(
         r'(?P<proceeds>\$[0-9,.]+)\s+'
         r'(?P<cost>\$[0-9,.]+)\s', re.DOTALL|re.MULTILINE)
 
-def check_dependencies():
+def check_dependencies() -> None:
     """Checks if required system dependencies are installed."""
     if not shutil.which('pdftotext'):
         print("Error: 'pdftotext' is not found in your PATH.", file=sys.stderr)
         print("Please install 'poppler-utils' or 'poppler' via your package manager.", file=sys.stderr)
         sys.exit(1)
 
-def formatShareQuantity(quantity):
+def format_share_quantity(quantity: str) -> str:
     if '.' in quantity:
         # Trim off trailing zeroes. If there is no remaining fractional part,
         # then also trim the decimal point.
         return quantity.rstrip('0').rstrip('.')
     return quantity
 
-def parseAndSerializeRows(text, entry_code):
+def parse_and_serialize_rows(text: str, entry_code: str) -> str:
     output_rows = []
-    for match in row_expr.finditer(text):
+    for match in ROW_EXPR.finditer(text):
         output_rows.append('TD')
         output_rows.append('N' + entry_code)
         output_rows.append('C1')
         output_rows.append('L1')
 
         # Form 8949 documents "100 sh. XYZ Co." as the example format.
-        quantity = formatShareQuantity(match.group('quantity'))
+        quantity = format_share_quantity(match.group('quantity'))
         output_rows.append('P' + quantity +
                            ' sh. of ' + match.group('descr'))
 
@@ -84,10 +85,10 @@ def parseAndSerializeRows(text, entry_code):
         output_rows.append('^')
     return '\n'.join(output_rows) + '\n'
 
-def parse_sections(text):
-    return section_expr.finditer(text)
+def parse_sections(text: str) -> Iterator[re.Match]:
+    return SECTION_EXPR.finditer(text)
 
-def main():
+def main() -> None:
     check_dependencies()
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -116,9 +117,9 @@ def main():
         output_stream.write('D ' + datetime.datetime.now().strftime('%m/%d/%Y') + '\n')
         output_stream.write('^' + '\n')
         for section_match in parse_sections(text):
-            entry_code = categories[section_match.group(1)]
+            entry_code = CATEGORIES[section_match.group(1)]
             contents = section_match.group(2)
-            serialized = parseAndSerializeRows(contents, entry_code)
+            serialized = parse_and_serialize_rows(contents, entry_code)
             output_stream.write(serialized)
     finally:
         output_stream.close()

@@ -26,3 +26,31 @@ $ python3 mssb_1099b_to_txf.py ~/Downloads/1099-B.pdf > ~/1099b.txf
 
 Then import `1099b.txf` into TurboTax. You'll likely need to add some fields
 and **please** double-check the results.
+
+## Development
+
+### Running Tests
+
+You can run the tests using the built-in `unittest` module:
+
+```bash
+python3 mssb_test.py
+```
+
+Or using `pytest` if installed:
+
+```bash
+pytest
+```
+
+### Type Checking
+
+The project uses Python type hints. You can verify them using `mypy`:
+
+```bash
+# Install mypy if you haven't already
+pip install mypy
+
+# Run type check
+mypy mssb_1099b_to_txf.py
+```

@@ -45,9 +45,9 @@ Total Short Term – Noncovered Securities
         """
         section_matches = mssb_1099b_to_txf.parse_sections(sample)
         section_match = next(section_matches)
-        entry_code = mssb_1099b_to_txf.categories[section_match.group(1)]
+        entry_code = mssb_1099b_to_txf.CATEGORIES[section_match.group(1)]
         contents = section_match.group(2)
-        serialized = mssb_1099b_to_txf.parseAndSerializeRows(contents,
+        serialized = mssb_1099b_to_txf.parse_and_serialize_rows(contents,
                                                              entry_code)
         self.assertEqual(serialized, """\
 TD
@@ -64,19 +64,19 @@ $
 """)
 
     def testFormatShareQuantity(self):
-        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('123'), '123',
+        self.assertEqual(mssb_1099b_to_txf.format_share_quantity('123'), '123',
                          'Whole numbers should be left as-is')
-        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('123.'),'123',
+        self.assertEqual(mssb_1099b_to_txf.format_share_quantity('123.'),'123',
                          'Remove decimal if there is no fractional part')
-        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('123.00'), '123',
+        self.assertEqual(mssb_1099b_to_txf.format_share_quantity('123.00'), '123',
                          'Trim trailing zeros and decimal if the fractional part is zero')
-        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('45.6'), '45.6',
+        self.assertEqual(mssb_1099b_to_txf.format_share_quantity('45.6'), '45.6',
                          'Leave fractional part if there are no trailing zeros')
-        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('45.60'), '45.6',
+        self.assertEqual(mssb_1099b_to_txf.format_share_quantity('45.60'), '45.6',
                          'Trim trailing zeros but leave non-zero fractional part')
-        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('70'), '70',
+        self.assertEqual(mssb_1099b_to_txf.format_share_quantity('70'), '70',
                          'Do not trim trailing zeros for whole numbers')
-        self.assertEqual(mssb_1099b_to_txf.formatShareQuantity('70.0'), '70',
+        self.assertEqual(mssb_1099b_to_txf.format_share_quantity('70.0'), '70',
                          'Do not trim trailing zeros to the left of the decimal')
 
 if __name__ == '__main__':
