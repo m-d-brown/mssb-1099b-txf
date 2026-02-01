@@ -50,6 +50,17 @@ ROW_EXPR = re.compile(
         r'(?P<proceeds>\$[0-9,.]+)\s+'
         r'(?P<cost>\$[0-9,.]+)\s', re.DOTALL|re.MULTILINE)
 
+
+class Transaction(NamedTuple):
+    description: str
+    cusip: str
+    quantity: str
+    date_acquired: str
+    date_sold: str
+    proceeds: str
+    cost_basis: str
+
+
 def check_dependencies() -> None:
     """Checks if required system dependencies are installed."""
     if not shutil.which('pdftotext'):
@@ -64,27 +75,52 @@ def format_share_quantity(quantity: str) -> str:
         return quantity.rstrip('0').rstrip('.')
     return quantity
 
-def parse_and_serialize_rows(text: str, entry_code: str) -> str:
-    output_rows = []
+
+def parse_rows(text: str) -> Iterator[Transaction]:
+    """Parses text content to yield Transaction objects."""
     for match in ROW_EXPR.finditer(text):
-        output_rows.append('TD')
-        output_rows.append('N' + entry_code)
-        output_rows.append('C1')
-        output_rows.append('L1')
+        yield Transaction(
+            description=match.group('descr'),
+            cusip=match.group('cusip'),
+            quantity=match.group('quantity'),
+            date_acquired=match.group('acquired'),
+            date_sold=match.group('sold'),
+            proceeds=match.group('proceeds'),
+            cost_basis=match.group('cost'),
+        )
 
-        # Form 8949 documents "100 sh. XYZ Co." as the example format.
-        quantity = format_share_quantity(match.group('quantity'))
-        output_rows.append('P' + quantity +
-                           ' sh. of ' + match.group('descr'))
 
-        output_rows.append('D' + match.group('acquired'))
-        output_rows.append('D' + match.group('sold'))
-        # These have a leading dollar sign.
-        output_rows.append(match.group('cost'))
-        output_rows.append(match.group('proceeds'))
-        output_rows.append("$") # Wash sale. Leaving blank. They aren't handled here.
-        output_rows.append('^')
-    return '\n'.join(output_rows) + '\n'
+def serialize_transaction(transaction: Transaction, entry_code: str) -> list[str]:
+    """Serializes a single transaction into TXF format lines."""
+    output_rows = []
+    output_rows.append('TD')
+    output_rows.append('N' + entry_code)
+    output_rows.append('C1')
+    output_rows.append('L1')
+
+    # Form 8949 documents "100 sh. XYZ Co." as the example format.
+    quantity = format_share_quantity(transaction.quantity)
+    output_rows.append(f'P{quantity} sh. of {transaction.description}')
+
+    output_rows.append('D' + transaction.date_acquired)
+    output_rows.append('D' + transaction.date_sold)
+    # These have a leading dollar sign.
+    output_rows.append(transaction.cost_basis)
+    output_rows.append(transaction.proceeds)
+    output_rows.append("$")  # Wash sale. Leaving blank. They aren't handled here.
+    output_rows.append('^')
+    return output_rows
+
+
+def parse_and_serialize_rows(text: str, entry_code: str) -> str:
+    """Parses text and returns a serialized TXF string."""
+    output_lines = []
+    for transaction in parse_rows(text):
+        output_lines.extend(serialize_transaction(transaction, entry_code))
+    
+    if output_lines:
+        return '\n'.join(output_lines) + '\n'
+    return ''
 
 def parse_sections(text: str) -> Iterator[re.Match]:
     return SECTION_EXPR.finditer(text)
