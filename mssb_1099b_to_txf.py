@@ -6,6 +6,7 @@ import argparse
 import datetime
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -47,6 +48,13 @@ row_expr = re.compile(
         r'(?P<proceeds>\$[0-9,.]+)\s+'
         r'(?P<cost>\$[0-9,.]+)\s', re.DOTALL|re.MULTILINE)
 
+def check_dependencies():
+    """Checks if required system dependencies are installed."""
+    if not shutil.which('pdftotext'):
+        print("Error: 'pdftotext' is not found in your PATH.", file=sys.stderr)
+        print("Please install 'poppler-utils' or 'poppler' via your package manager.", file=sys.stderr)
+        sys.exit(1)
+
 def formatShareQuantity(quantity):
     if '.' in quantity:
         # Trim off trailing zeroes. If there is no remaining fractional part,
@@ -80,6 +88,7 @@ def parse_sections(text):
     return section_expr.finditer(text)
 
 def main():
+    check_dependencies()
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'input_path',
