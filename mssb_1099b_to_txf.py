@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from typing import Iterator, NamedTuple, Optional, TextIO
 
 # Codes and structure are defined at
@@ -93,22 +94,32 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'input_path',
-        type=os.path.realpath,
+        type=Path,
         help='The path to the 1099-B PDF document.')
     parser.add_argument(
         'output_path',
         nargs='?',
         default=None,
-        type=str,
+        type=Path,
         help=('The destination file name for the TXF output. If this argument '
               'is omitted, then the TXF output will print to stdout.'))
     args = parser.parse_args()
-    text = subprocess.check_output(['pdftotext', '-raw', args.input_path, '-']).decode()
+    
+    if not args.input_path.exists():
+        print(f"Error: Input file '{args.input_path}' does not exist.", file=sys.stderr)
+        sys.exit(1)
+        
+    try:
+        text = subprocess.check_output(['pdftotext', '-raw', str(args.input_path), '-']).decode()
+    except subprocess.CalledProcessError as e:
+        print(f"Error reading PDF: {e}", file=sys.stderr)
+        sys.exit(1)
 
     output_stream = sys.stdout
     if args.output_path:
-        if os.path.exists(args.output_path):
-            raise FileExistsError('Output path "' + args.output_path + '" already exists')
+        if args.output_path.exists():
+            print(f'Error: Output path "{args.output_path}" already exists', file=sys.stderr)
+            sys.exit(1)
         output_stream = open(args.output_path, 'w')
 
     try:
