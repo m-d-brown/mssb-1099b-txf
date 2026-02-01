@@ -125,6 +125,20 @@ def parse_and_serialize_rows(text: str, entry_code: str) -> str:
 def parse_sections(text: str) -> Iterator[re.Match]:
     return SECTION_EXPR.finditer(text)
 
+
+def write_txf(text: str, output_stream: TextIO) -> None:
+    """Writes parsed PDF text to the output stream in TXF format."""
+    output_stream.write('V042' + '\n')
+    output_stream.write('A mssb_1099b_to_txf' + '\n')
+    output_stream.write('D ' + datetime.datetime.now().strftime('%m/%d/%Y') + '\n')
+    output_stream.write('^' + '\n')
+    for section_match in parse_sections(text):
+        entry_code = CATEGORIES[section_match.group(1)]
+        contents = section_match.group(2)
+        serialized = parse_and_serialize_rows(contents, entry_code)
+        output_stream.write(serialized)
+
+
 def main() -> None:
     check_dependencies()
     parser = argparse.ArgumentParser()
@@ -151,25 +165,14 @@ def main() -> None:
         print(f"Error reading PDF: {e}", file=sys.stderr)
         sys.exit(1)
 
-    output_stream = sys.stdout
     if args.output_path:
         if args.output_path.exists():
             print(f'Error: Output path "{args.output_path}" already exists', file=sys.stderr)
             sys.exit(1)
-        output_stream = open(args.output_path, 'w')
-
-    try:
-        output_stream.write('V042' + '\n')
-        output_stream.write('A mssb_1099b_to_txf' + '\n')
-        output_stream.write('D ' + datetime.datetime.now().strftime('%m/%d/%Y') + '\n')
-        output_stream.write('^' + '\n')
-        for section_match in parse_sections(text):
-            entry_code = CATEGORIES[section_match.group(1)]
-            contents = section_match.group(2)
-            serialized = parse_and_serialize_rows(contents, entry_code)
-            output_stream.write(serialized)
-    finally:
-        output_stream.close()
+        with args.output_path.open('w') as output_stream:
+            write_txf(text, output_stream)
+    else:
+        write_txf(text, sys.stdout)
 
 if __name__ == '__main__':
     main()
