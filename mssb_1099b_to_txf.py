@@ -128,10 +128,14 @@ def parse_sections(text: str) -> Iterator[re.Match]:
 
 def write_txf(text: str, output_stream: TextIO) -> None:
     """Writes parsed PDF text to the output stream in TXF format."""
-    output_stream.write('V042' + '\n')
-    output_stream.write('A mssb_1099b_to_txf' + '\n')
-    output_stream.write('D ' + datetime.datetime.now().strftime('%m/%d/%Y') + '\n')
-    output_stream.write('^' + '\n')
+    # See https://taxdataexchange.org/docs/txf/v042/index.html for the spec for
+    # the header record.
+    header_record = []
+    header_record.append('V042')
+    header_record.append('Amssb_1099b_to_txf')
+    header_record.append('D' + datetime.datetime.now().strftime('%m/%d/%Y'))
+    header_record.append('^')
+    output_stream.write('\n'.join(header_record) + '\n')
     for section_match in parse_sections(text):
         entry_code = CATEGORIES[section_match.group(1)]
         contents = section_match.group(2)
