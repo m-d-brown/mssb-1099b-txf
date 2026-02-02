@@ -8,7 +8,7 @@ has been used to import only a few different 1099-Bs so you may encounter
 errors.
 
 The TXF format is relatively straightforward and text based. It's defined at
-https://www.taxdataexchange.org/txf/txf-spec.html
+https://taxdataexchange.org/docs/txf/v042/index.html.
 
 ## Install
 

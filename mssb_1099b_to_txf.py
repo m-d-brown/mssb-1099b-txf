@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Iterator, NamedTuple, Optional, TextIO
 
 # Codes and structure are defined at
-# https://www.taxdataexchange.org/txf/txf-spec.html
+# https://taxdataexchange.org/docs/txf/v042/reference-numbers-by-form.html
 CATEGORIES = {
         'Short Term – Noncovered Securities': '711',
         'Long Term – Noncovered Securities': '713',
